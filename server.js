@@ -4,6 +4,28 @@ const port = 3000
 
 app.use(express.json())
 
+// user -> abcdefg
+// admin -> hijklmn
+
+const adminMiddleware = (req, res, next) => {
+	const { headers } = req
+
+	if (!headers['user-token']) {
+		return res.status(401).json({
+			message: 'error',
+			erros: 'unauthenticated',
+		})
+	}
+	if (headers['user-token'] !== 'hijklmn') {
+		return res.status(403).json({
+			message: 'error',
+			erros: 'unauthorized',
+		})
+	}
+
+	next()
+}
+
 app.get('/', (req, res) => {
 	res.send('Halo Duniaku!')
 })
@@ -41,7 +63,7 @@ app.get('/users', (req, res) => {
 	res.send(result)
 })
 
-app.post('/users', (req, res) => {
+app.post('/users', adminMiddleware, (req, res) => {
 	const { body } = req
 
 	users.push(body)
@@ -49,7 +71,7 @@ app.post('/users', (req, res) => {
 	res.status(201).json(body)
 })
 
-app.put('/users/:id', (req, res) => {
+app.put('/users/:id', adminMiddleware, (req, res) => {
 	const { body, params } = req
 
 	const idx = users.findIndex(user => user.id === parseInt(params.id, 10))
@@ -70,7 +92,7 @@ app.put('/users/:id', (req, res) => {
 	})
 })
 
-app.delete('/users/:id', (req, res) => {
+app.delete('/users/:id', adminMiddleware, (req, res) => {
 	const { params } = req
 
 	const idx = users.findIndex(user => user.id === parseInt(params.id, 10))
